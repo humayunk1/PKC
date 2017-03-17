@@ -30,4 +30,7 @@ Citing PKC:
     If you use PKC, please cite our paper:
     
     H. Kabir and K. Madduri, "Parallel k-core Decomposition on Multicore Platforms," in The 2nd IEEE Workshop on Parallel and Distributed Processing for Computational Social Systems (ParSocial 2017), June 2017, to appear.
+    
+Support:
 
+    Please email Humayun Kabir (hzk134@cse.psu.edu) and Kamesh Madduri (madduri@cse.psu.edu).
