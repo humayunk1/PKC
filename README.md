@@ -6,8 +6,8 @@ Compiling the program:
     
     $ cd /PKC/
     $ make 
-    By default, Intel's icc compiler is used. gcc compiler can also be used. To use gcc, please change the Makefile 
-    to include -fopenmp flag.
+    By default, gcc compiler is used. Intel's icc compiler can also be used. To use icc, please change the Makefile 
+    to include -openmp flag.
     
     
 Input Format:
