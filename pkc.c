@@ -829,7 +829,7 @@ void PKC(graph_t *g, int *deg) {
     unsigned int cumNumEdges[NUM_THREADS];
     unsigned int part = 0;
     graph_t g_small;
-
+    g_small.num_edges = NULL; g_small.adj = NULL;
 
 #pragma omp parallel 
 {
