@@ -18,10 +18,13 @@
 #include <limits.h>
 #include <omp.h>
 
-//Make a small graph once 98% vertices have been processed
+// Make a small graph once 98% vertices have been processed
 #define frac 0.98
 
-//Number of threads used
+// This value controls per-thread storage. Increase if your code crashes
+# define BUFF_MULT_FACTOR 1
+
+// Number of threads used
 int NUM_THREADS = 1;
 
 typedef unsigned int vid_t;
@@ -827,7 +830,7 @@ void PKC(graph_t *g, int *deg) {
     unsigned int *mapIndexToVtx = NULL;
     vid_t *vertexToIndex = (vid_t *)malloc( n * sizeof(vid_t) );
     unsigned int cumNumEdges[NUM_THREADS];
-    unsigned int part = 0;
+    int part = 0; // Thanks to J. Shi for reporting this bug
     graph_t g_small;
     g_small.num_edges = NULL; g_small.adj = NULL;
 
@@ -835,8 +838,9 @@ void PKC(graph_t *g, int *deg) {
 {
     int level = 0;
     int tid = omp_get_thread_num();
-
-    vid_t *buff = (vid_t *)malloc( (n*sizeof(vid_t)) / NUM_THREADS );
+	
+    // resize if necessary 
+    vid_t *buff = (vid_t *)malloc( (BUFF_MULT_FACTOR*n*sizeof(vid_t)) / NUM_THREADS ); 
     assert( buff != NULL);
 
     long start = 0, end = 0;
@@ -930,7 +934,7 @@ void PKC(graph_t *g, int *deg) {
                 cumNumEdges[0] = 0;
             }
 #pragma omp barrier
-            if( tid == NUM_THREADS -1) {
+            if( tid == (NUM_THREADS -1)) {
 
                 for(long i = tid*part; i < Size; i++) {
                     g_small.num_edges[i] = g_small.num_edges[i] + cumNumEdges[tid];
@@ -959,9 +963,9 @@ void PKC(graph_t *g, int *deg) {
             }
 #pragma omp barrier
             //Now fix num_edges array
-            if( tid == NUM_THREADS -1) {
+            if( tid == (NUM_THREADS -1)) {
 
-                for(long i = Size -1; i >=tid*part+1; i--) {
+                for(long i = (Size-1); i >=(tid*part+1); i--) { 
                     g_small.num_edges[i] = g_small.num_edges[i-1];
                 }
                 g_small.num_edges[ tid*part ] = cumNumEdges[tid];
@@ -969,7 +973,7 @@ void PKC(graph_t *g, int *deg) {
             }
             else {
 
-                for(long i = (tid+1)*part-1; i >= tid*part+1; i--) {
+                for(long i = ((tid+1)*part-1); i >= (tid*part+1); i--) { // part can't be unsigned int here
                     g_small.num_edges[i] = g_small.num_edges[i-1];
                 }
                 g_small.num_edges[ tid*part ] = cumNumEdges[tid] ;
