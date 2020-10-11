@@ -21,8 +21,12 @@
 // Make a small graph once 98% vertices have been processed
 #define frac 0.98
 
-// This value controls per-thread storage. Increase if your code crashes
-# define BUFF_MULT_FACTOR 1
+// This value controls per-thread storage. Increase if the code fails assert
+// in PKC and PKC_org
+#define BUFF_MULT_FACTOR 1
+
+// This can be set to 0 once you make sure there's adequate memory for your use-case
+#define BUFF_ACCESS_ASSERTS 1
 
 // Number of threads used
 int NUM_THREADS = 1;
@@ -259,6 +263,7 @@ void BZ_kCores(graph_t *g, int *deg) {
 
     free( vert );
     free( pos );
+    free( bin );
 }
 
 
@@ -755,8 +760,10 @@ void PKC_org(graph_t *g, int *deg) {
 {
     int level = 0;
 
-    vid_t *buff = (vid_t *)malloc( (n*sizeof(vid_t)) / NUM_THREADS );
-    assert( buff != NULL);
+    long buff_size = (BUFF_MULT_FACTOR*n)/NUM_THREADS + 1;
+    
+    vid_t *buff = (vid_t *)malloc(buff_size*sizeof(vid_t));
+    assert(buff != NULL);
 
     long start = 0, end = 0;
 
@@ -771,6 +778,9 @@ void PKC_org(graph_t *g, int *deg) {
         for(long i = 0; i < n; i++)  {
 
             if( deg[i] == level ) {
+#if BUFF_ACCESS_ASSERTS
+                assert(end < buff_size);
+#endif
                 buff[end] = i;
                 end ++;
             }
@@ -791,6 +801,9 @@ void PKC_org(graph_t *g, int *deg) {
                         int du = __sync_fetch_and_sub(&deg[u], 1);
 
                         if( du == (level+1) ) {
+#if BUFF_ACCESS_ASSERTS
+                            assert(end < buff_size);
+#endif
                             buff[end] = u;
                             end ++;
                         }
@@ -840,7 +853,8 @@ void PKC(graph_t *g, int *deg) {
     int tid = omp_get_thread_num();
 	
     // resize if necessary 
-    vid_t *buff = (vid_t *)malloc( (BUFF_MULT_FACTOR*n*sizeof(vid_t)) / NUM_THREADS ); 
+    long buff_size = (BUFF_MULT_FACTOR*n)/NUM_THREADS + 1;
+    vid_t *buff = (vid_t *)malloc(buff_size*sizeof(vid_t)); 
     assert( buff != NULL);
 
     long start = 0, end = 0;
@@ -871,6 +885,9 @@ void PKC(graph_t *g, int *deg) {
 #pragma omp for schedule(static)
             for(long i = 0; i < n; i++)  {
                 if( deg[i] >= level ) {
+#if BUFF_ACCESS_ASSERTS
+                    assert(end < buff_size);
+#endif
                     buff[end] = i;
                     end ++;
                 }
@@ -987,6 +1004,9 @@ void PKC(graph_t *g, int *deg) {
 #pragma omp for schedule(static) 
             for(long i = 0; i < n; i++)  {
                 if( deg[i] == level ) {
+#if BUFF_ACCESS_ASSERTS
+                    assert(end < buff_size);
+#endif
                     buff[end] = i;
                     end ++;
                 }
@@ -1007,6 +1027,9 @@ void PKC(graph_t *g, int *deg) {
                             int du = __sync_fetch_and_sub(&deg[u], 1);
 
                             if( du == (level+1) ) {
+#if BUFF_ACCESS_ASSERTS
+                                assert(end < buff_size);
+#endif
                                 buff[end] = u;
                                 end ++;
                             }
@@ -1044,6 +1067,9 @@ void PKC(graph_t *g, int *deg) {
                         int du = __sync_fetch_and_sub(&newDeg[u], 1);
 
                         if( du == (level+1) ) {
+#if BUFF_ACCESS_ASSERTS
+                            assert(end < buff_size);
+#endif
                             buff[end] = u;
                             end ++;
                         }
