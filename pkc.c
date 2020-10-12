@@ -938,14 +938,14 @@ void PKC(graph_t *g, int *deg) {
 
 #pragma omp barrier
             if( tid == 0 ) {
-                long start = cumNumEdges[0];
+                long start0 = cumNumEdges[0];
                 for(int i = 1; i < NUM_THREADS; i++) {
-                    unsigned int prevEdgeCount = start;
-                    start = start + cumNumEdges[i];
+                    unsigned int prevEdgeCount = start0;
+                    start0 = start0 + cumNumEdges[i];
                     cumNumEdges[i] = prevEdgeCount;
                 }
-                g_small.m = start;
-                g_small.num_edges[Size] = start;
+                g_small.m = start0;
+                g_small.num_edges[Size] = start0;
 
                 g_small.adj = (eid_t *)malloc( g_small.m * sizeof(eid_t) );
                 cumNumEdges[0] = 0;
